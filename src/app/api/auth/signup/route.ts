@@ -1,6 +1,8 @@
 // app/api/signup/route.ts
 import { auth } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
+import Portfolio from "@/lib/models/Portfolio";
+import { initDB } from "@/lib/helpers";
 
 export async function POST(req: NextRequest) {
     try {
@@ -28,6 +30,9 @@ export async function POST(req: NextRequest) {
                 { status: 400 }
             );
         }
+        
+        await initDB();
+        Portfolio.create({ userId: response.user.id })
 
         return NextResponse.json(
             { message: "Signup successful", user: response.user },
