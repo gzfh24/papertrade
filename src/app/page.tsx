@@ -1,8 +1,14 @@
 'use client';
-import Image from "next/image";
-import AuthModal from "@/components/AuthModal";
-import { useState } from "react";
 
-export default function Home() {
-  return <span>Hi</span>
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+
+export default function Page() {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.push('/trade');
+  }, [router]);
+
+  return null;
 }

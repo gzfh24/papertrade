@@ -24,9 +24,9 @@ const TradeSchema: Schema = new Schema({
     leverage: { type: Number, required: true, default: 1 },
     openedAt: { type: Date, default: Date.now },
     isOpen: { type: Boolean, required: true, default: true },
-    closedAt: { type: Date },
-    closePrice: { type: Number },
-    profit: { type: Number },
+    closedAt: { type: Date, default: null },
+    closePrice: { type: Number, default: null },
+    profit: { type: Number, default: null },
 });
 
 // Portfolio Schema

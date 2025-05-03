@@ -3,7 +3,7 @@ import Link from "next/link";
 import { createAuthClient } from "better-auth/react"
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import AuthModal from "@/components/AuthModal";
 
 const { useSession } = createAuthClient()
@@ -16,7 +16,33 @@ export default function NavBar() {
         refetch //refetch the session
     } = useSession()
     const [authOpen, setAuthOpen] = useState(false);
+    const [balance, setBalance] = useState<number | null>(null);
 
+    const fetchBalance = useCallback(async () => {
+        if (!session?.user?.id) return;
+        try {
+        const res = await fetch('/api/portfolio', {
+            credentials: 'include',
+            cache: 'no-store',
+        });
+        const data = await res.json();
+        if (res.ok && typeof data.balance === 'number') {
+            setBalance(data.balance);
+        }
+        } catch {
+            setBalance(null);
+        }
+    }, [session?.user?.id]);
+
+    useEffect(() => {
+        fetchBalance();
+    }, [fetchBalance]);
+    
+    useEffect(() => {
+        window.addEventListener('trade:placed', fetchBalance);
+        return () => window.removeEventListener('trade:placed', fetchBalance);
+    }, [fetchBalance]);
+    
     useEffect(() => {
         if (!authOpen) {
           refetch();
@@ -65,6 +91,11 @@ export default function NavBar() {
                     >
                     {session.user.name || session.user.email}
                     </span>
+                    {balance !== null && (
+                        <span className="text-sm font-mono tabular-nums hidden lg:inline-block">
+                        ${balance.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                        </span>
+                    )}
                     <form action="/api/signout" method="post">
                     <Button size="sm" variant="secondary" type="submit">
                         Sign out

@@ -1,44 +1,83 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from 'react';
 import {
   Tabs,
   TabsList,
   TabsTrigger,
-} from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Slider } from "@/components/ui/slider";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+} from '@/components/ui/tabs';
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
+} from '@/components/ui/select';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Slider } from '@/components/ui/slider';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
+
+type Asset = 'BTCUSD' | 'XAUUSD' | 'SPXUSD' | 'NDXUSD';
 
 interface TradePanelProps {
-  symbol: "BTCUSD" | "XAUUSD" | "SPXUSD" | "NDXUSD";
-  markPrice: number;
+  initialAsset?: Asset
+  onAssetChange?: (asset: Asset) => void;
   onPlaced?: () => void;
 }
 
-export default function TradePanel({ symbol, markPrice, onPlaced }: TradePanelProps) {
-  const [side, setSide] = useState<string>("long");
-  const [usd, setUsd] = useState<string>("");
-  const [leverage, setLeverage] = useState<number>(1);
+export default function TradePanel({ initialAsset = 'BTCUSD', onAssetChange, onPlaced }: TradePanelProps) {
+  /* ─────────────────── internal state ─────────────────── */
+  const [symbol, setSymbol] = useState<Asset>(initialAsset);
+  const [price, setPrice] = useState<number>(0);
+  const [side, setSide] = useState<'long' | 'short'>('long');
+  const [usd, setUsd] = useState('');
+  const [leverage, setLeverage] = useState(1);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (onAssetChange) {
+      onAssetChange(symbol);
+    }
+  }, [symbol, onAssetChange]);
+
+  /* ─────────── poll /api/prices every 5 s ─────────── */
+  useEffect(() => {
+    let mounted = true;
+    async function fetchPrice() {
+      try {
+        const res = await fetch(`/api/prices?symbol=${symbol}`, { cache: 'no-store' });
+        const data = await res.json();
+        if (mounted && data.price) setPrice(data.price);
+      } catch (_) {
+        /* ignore */
+      }
+    }
+    fetchPrice();                       // initial
+    const id = setInterval(fetchPrice, 5_000);
+    return () => {
+      mounted = false;
+      clearInterval(id);
+    };
+  }, [symbol]);
+
+  /* ────────────── place trade handler ────────────── */
   const placeTrade = async () => {
     const margin = Number(usd);
     if (!margin || margin <= 0) {
-      toast.error("Enter a valid USD amount");
+      toast.error('Enter a valid USD amount');
       return;
     }
 
     setLoading(true);
-    const res = await fetch("/api/trade/open", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    const res = await fetch('/api/trade/open', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         symbol,
         margin,
-        isLong: side === "long",
+        isLong: side === 'long',
         leverage,
       }),
     });
@@ -46,13 +85,15 @@ export default function TradePanel({ symbol, markPrice, onPlaced }: TradePanelPr
 
     if (!res.ok) {
       const { message } = await res.json();
-      toast.error(message ?? "Trade failed");
+      toast.error(message ?? 'Trade failed');
       return;
     }
 
-    toast.success("Trade placed");
-    setUsd("");
+    toast.success('Trade placed');
+    setUsd('');
     setLeverage(1);
+
+    window.dispatchEvent(new Event('trade:placed'));
     onPlaced?.();
   };
 
@@ -62,18 +103,48 @@ export default function TradePanel({ symbol, markPrice, onPlaced }: TradePanelPr
         <CardHeader>
           <CardTitle className="text-center">New Position</CardTitle>
         </CardHeader>
+
         <CardContent>
-          {/* Long / Short switch */}
-          <Tabs value={side} onValueChange={setSide} className="mb-6">
+          {/* ─────────── asset selector ─────────── */}
+          <div className="mb-4">
+            <label className="text-sm font-medium mb-1 block">Market</label>
+            <Select value={symbol} onValueChange={v => setSymbol(v as Asset)}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select asset" />
+              </SelectTrigger>
+              <SelectContent>
+                {['BTCUSD', 'XAUUSD', 'SPXUSD', 'NDXUSD'].map(a => (
+                  <SelectItem key={a} value={a}>
+                    {a}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* ─────────── long / short tabs ─────────── */}
+          <Tabs value={side} onValueChange={v => setSide(v as 'long' | 'short')} className="mb-6">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="long" className="data-[state=active]:bg-green-500/20 data-[state=active]:text-green-600">Long</TabsTrigger>
-              <TabsTrigger value="short" className="data-[state=active]:bg-red-500/20 data-[state=active]:text-red-600">Short</TabsTrigger>
+              <TabsTrigger
+                value="long"
+                className="data-[state=active]:bg-green-500/20 data-[state=active]:text-green-600"
+              >
+                Long
+              </TabsTrigger>
+              <TabsTrigger
+                value="short"
+                className="data-[state=active]:bg-red-500/20 data-[state=active]:text-red-600"
+              >
+                Short
+              </TabsTrigger>
             </TabsList>
           </Tabs>
 
-          {/* USD input */}
+          {/* ─────────── margin input ─────────── */}
           <div className="space-y-2 mb-4">
-            <label htmlFor="usd" className="text-sm font-medium">Margin (USD)</label>
+            <label htmlFor="usd" className="text-sm font-medium">
+              Margin (USD)
+            </label>
             <Input
               id="usd"
               placeholder="0.00"
@@ -85,9 +156,12 @@ export default function TradePanel({ symbol, markPrice, onPlaced }: TradePanelPr
             />
           </div>
 
-          {/* Leverage slider */}
+          {/* ─────────── leverage slider ─────────── */}
           <div className="space-y-2 mb-4">
-            <label className="text-sm font-medium flex justify-between"><span>Leverage</span><span>{leverage}×</span></label>
+            <label className="text-sm font-medium flex justify-between">
+              <span>Leverage</span>
+              <span>{leverage}×</span>
+            </label>
             <Slider
               value={[leverage]}
               min={1}
@@ -97,19 +171,23 @@ export default function TradePanel({ symbol, markPrice, onPlaced }: TradePanelPr
             />
           </div>
 
-          {/* Entry price */}
+          {/* ─────────── entry price display ─────────── */}
           <div className="flex justify-between mb-6 text-sm">
             <span className="text-muted-foreground">Entry price</span>
-            <span>${markPrice.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+            <span>
+              {price
+                ? `$${price.toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+                : '—'}
+            </span>
           </div>
 
           <Button
             disabled={loading}
             className="w-full"
             onClick={placeTrade}
-            variant={side === "long" ? "default" : "destructive"}
+            variant={side === 'long' ? 'default' : 'destructive'}
           >
-            {loading ? "Placing…" : side === "long" ? "Long" : "Short"}
+            {loading ? 'Placing…' : side === 'long' ? 'Long' : 'Short'}
           </Button>
         </CardContent>
       </Card>

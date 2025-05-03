@@ -3,6 +3,13 @@ import Portfolio from "@/lib/models/Portfolio";
 import { initDB, requireUser, getMarkPrice } from "@/lib/helpers";
 import { openTradeSchema } from "@/lib/validate";
 
+const YAHOO_MAP: Record<string, string> = {
+  BTCUSD: 'BTC-USD',
+  XAUUSD: 'GC=F',   // gold futures
+  SPXUSD: '^GSPC',  // S&P 500 index
+  NDXUSD: '^NDX',   // Nasdaq‑100
+};
+
 // GET /api/trade/open  ── all open positions
 export async function GET() {
   await initDB();
@@ -32,7 +39,13 @@ export async function POST(req: Request) {
   }
   const { symbol, margin, isLong, leverage } = parsed.data;
 
-  const entryPrice = await getMarkPrice(symbol);
+  if (!YAHOO_MAP[symbol])
+    return NextResponse.json(
+      { error: 'Unsupported symbol' },
+      { status: 400 }
+    );
+
+  const entryPrice = await getMarkPrice(YAHOO_MAP[symbol]);
   const size = +(margin * leverage / entryPrice).toFixed(8);
 
   let base = await Portfolio.findOne({ userId });

@@ -6,33 +6,32 @@ import NavBar from "@/components/NavBar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Toaster } from "sonner";
 import { useState } from "react";
+import dynamic from 'next/dynamic';
+
+const TradingViewWidget = dynamic(
+  () => import('@/components/TradingViewWidget'),
+  { ssr: false, loading: () => <div>Loading chart…</div> }
+);
 
 export default function TradePage() {
   // Placeholder mark price until you wire the realtime feed
   const [price] = useState(0);
+  const [asset, setAsset] = useState<'BTCUSD' | 'XAUUSD' | 'SPXUSD' | 'NDXUSD'>('BTCUSD');
 
   return (
     <div className="min-h-screen flex flex-col">
       <NavBar />
       <Toaster richColors />
 
-      {/* Info bar */}
-      <section className="w-full border-b py-2 px-4 text-sm flex justify-between bg-muted/50">
-        <span>BTC/USD</span>
-        <span>${price || "--"}</span>
-      </section>
-
       {/* Main content */}
       <main className="flex-1 grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-6 p-4 max-w-7xl mx-auto w-full">
         {/* TradingView chart placeholder */}
-        <Card className="h-[480px] xl:h-full">
-          <CardContent className="h-full flex items-center justify-center text-muted-foreground">
-            TradingView Chart (coming soon)
-          </CardContent>
-        </Card>
+        <section className="flex-1 min-h-[500px]">
+          <TradingViewWidget asset={asset}/>
+        </section>
 
         {/* Trade panel */}
-        <TradePanel symbol="BTCUSD" markPrice={price || 0} />
+        <TradePanel onAssetChange={setAsset} />
       </main>
 
       {/* Open trades section */}
