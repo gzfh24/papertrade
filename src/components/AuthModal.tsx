@@ -1,167 +1,151 @@
-"use client";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+'use client';
 
-export default function AuthModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
-    const [activeTab, setActiveTab] = useState<"signin" | "signup">("signin");
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [username, setUsername] = useState(""); // Only for signup
-    const [error, setError] = useState("");
-    const router = useRouter();
+import { useState, FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
-    // Reset form fields when switching tabs or closing
-    const resetForm = () => {
-        setEmail("");
-        setPassword("");
-        setUsername("");
-        setError("");
-    };
+import {
+    Dialog,
+    DialogOverlay,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import {
+    Tabs,
+    TabsList,
+    TabsTrigger,
+    TabsContent,
+} from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
-    const handleSignIn = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setError("");
+interface AuthModalProps {
+    open: boolean;
+    onOpenChange: (o: boolean) => void;
+}
 
-        try {
-            const res = await fetch("/api/auth/signin", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, password }),
-            });
+export default function AuthModal({ open, onOpenChange }: AuthModalProps) {
+const [tab, setTab] = useState<'signin' | 'signup'>('signin');
+const [email, setEmail] = useState('');
+const [password, setPassword] = useState('');
+const [username, setUsername] = useState('');
+const router = useRouter();
 
-            const data = await res.json();
-            if (!res.ok) {
-                setError(data.error || "Invalid credentials");
-                return;
-            }
+const reset = () => {
+    setEmail('');
+    setPassword('');
+    setUsername('');
+};
 
-            console.log("Signin successful:", data.user);
-            onClose();
-            router.push("/dashboard");
-        } catch (err) {
-            setError("Something went wrong");
-            console.error(err);
-        }
-    };
+async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
 
-    const handleSignUp = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setError("");
+    const endpoint = tab === 'signin' ? '/api/signin' : '/api/signup';
+    const body: Record<string, string> = { email, password };
+    if (tab === 'signup') body.username = username;
 
-        try {
-            const res = await fetch("/api/auth/signup", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, password, username }),
-            });
+    const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(body),
+    });
 
-            const data = await res.json();
-            if (!res.ok) {
-                setError(data.error || "Signup failed");
-                return;
-            }
+    const data = await res.json();
+    if (!res.ok) {
+        toast.error(data.error || 'Something went wrong');
+        return;
+    }
 
-            console.log("Signup successful:", data.user);
-            onClose();
-            router.push("/dashboard");
-        } catch (err) {
-            setError("Something went wrong");
-            console.error(err);
-        }
-    };
+    toast.success(tab === 'signin' ? 'Signed in!' : 'Account created!');
 
-    if (!isOpen) return null;
+    reset();
+    onOpenChange(false);
+    router.refresh();
+}
 
-    return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-lg">
-                {/* Close Button */}
-                <button
-                    onClick={() => {
-                        resetForm();
-                        onClose();
-                    }}
-                    className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
-                >
-                    ✕
-                </button>
+return (
+    <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) reset(); }}>
+    {/* frosted‑glass overlay */}
+    <DialogOverlay className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40" />
 
-                {/* Tabs */}
-                <div className="flex border-b mb-4">
-                    <button
-                        className={`flex-1 py-2 text-center ${
-                            activeTab === "signin"
-                                ? "border-b-2 border-blue-500 text-blue-500"
-                                : "text-gray-500"
-                        }`}
-                        onClick={() => {
-                            setActiveTab("signin");
-                            resetForm();
-                        }}
-                    >
-                        Sign In
-                    </button>
-                    <button
-                        className={`flex-1 py-2 text-center ${
-                            activeTab === "signup"
-                                ? "border-b-2 border-blue-500 text-blue-500"
-                                : "text-gray-500"
-                        }`}
-                        onClick={() => {
-                            setActiveTab("signup");
-                            resetForm();
-                        }}
-                    >
-                        Sign Up
-                    </button>
-                </div>
+    {/* animated card */}
+    <DialogContent
+        className="z-50 w-[92%] sm:w-full sm:max-w-md rounded-2xl border
+                bg-background p-6 shadow-xl animate-in
+                fade-in zoom-in-90 duration-200"
+    >
+        <DialogHeader>
+        <DialogTitle className="text-center text-2xl font-semibold tracking-tight">
+            {tab === 'signin' ? 'Welcome back' : 'Create an account'}
+        </DialogTitle>
+        </DialogHeader>
 
-                {/* Form */}
-                <form onSubmit={activeTab === "signin" ? handleSignIn : handleSignUp}>
-                    {activeTab === "signup" && (
-                        <div className="mb-4">
-                            <label className="block text-gray-700 mb-1">Username</label>
-                            <input
-                                type="text"
-                                value={username}
-                                onChange={(e) => setUsername(e.target.value)}
-                                className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                placeholder="Enter your username"
-                                required
-                            />
-                        </div>
-                    )}
-                    <div className="mb-4">
-                        <label className="block text-gray-700 mb-1">Email</label>
-                        <input
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Enter your email"
-                            required
-                        />
-                    </div>
-                    <div className="mb-4">
-                        <label className="block text-gray-700 mb-1">Password</label>
-                        <input
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Enter your password"
-                            required
-                        />
-                    </div>
-                    {error && <p className="text-red-500 mb-4">{error}</p>}
-                    <button
-                        type="submit"
-                        className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition"
-                    >
-                        {activeTab === "signin" ? "Sign In" : "Sign Up"}
-                    </button>
-                </form>
-            </div>
-        </div>
-    );
+        <Tabs value={tab} onValueChange={(v) => setTab(v as any)} className="mt-5">
+        <TabsList className="grid w-full grid-cols-2 mb-6">
+            <TabsTrigger value="signin">Sign&nbsp;In</TabsTrigger>
+            <TabsTrigger value="signup">Sign&nbsp;Up</TabsTrigger>
+        </TabsList>
+
+        {/* ───────────────────────── Sign‑in ───────────────────────── */}
+        <TabsContent value="signin">
+            <form onSubmit={handleSubmit} className="space-y-4">
+            <Input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
+                required
+            />
+            <Input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+                required
+            />
+            <Button type="submit" className="w-full">
+                Sign&nbsp;In
+            </Button>
+            </form>
+        </TabsContent>
+
+        {/* ───────────────────────── Sign‑up ───────────────────────── */}
+        <TabsContent value="signup">
+            <form onSubmit={handleSubmit} className="space-y-4">
+            <Input
+                placeholder="Username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                autoComplete="username"
+                required
+            />
+            <Input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
+                required
+            />
+            <Input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="new-password"
+                required
+            />
+            <Button type="submit" className="w-full">
+                Create&nbsp;Account
+            </Button>
+            </form>
+        </TabsContent>
+        </Tabs>
+    </DialogContent>
+    </Dialog>
+);
 }

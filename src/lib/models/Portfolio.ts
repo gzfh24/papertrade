@@ -26,7 +26,7 @@ const TradeSchema: Schema = new Schema({
     isOpen: { type: Boolean, required: true, default: true },
     closedAt: { type: Date },
     closePrice: { type: Number },
-    profit: { type: Number, default: 0 },
+    profit: { type: Number },
 });
 
 // Portfolio Schema
