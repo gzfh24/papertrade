@@ -2,6 +2,13 @@ import { NextResponse } from "next/server";
 import Portfolio from "@/lib/models/Portfolio";
 import { initDB, requireUser, getMarkPrice } from "@/lib/helpers";
 
+const YAHOO_MAP: Record<string, string> = {
+  BTCUSD: 'BTC-USD',
+  XAUUSD: 'GC=F',   // gold futures
+  SPXUSD: '^GSPC',  // S&P 500 index
+  NDXUSD: '^NDX',   // Nasdaq‑100
+};
+
 export async function POST(
   _req: Request,
   { params }: { params: { id: string } }
@@ -14,7 +21,8 @@ export async function POST(
   if (!portfolio)
     return NextResponse.json({ message: "Portfolio not found" }, { status: 404 });
 
-  const trade = portfolio.positions.id(params.id);
+  const { id } = await params
+  const trade = portfolio.positions.id(id);
   if (!trade || !trade.isOpen)
     return NextResponse.json(
       { message: "Trade not found or already closed" },
@@ -22,7 +30,7 @@ export async function POST(
     );
 
   // 2. fetch current mark-price for the trade’s symbol
-  const closePrice = await getMarkPrice(trade.symbol);
+  const closePrice = await getMarkPrice(YAHOO_MAP[trade.symbol]);
   if (closePrice == null)
     return NextResponse.json(
       { message: "Unable to fetch mark price" },

@@ -3,7 +3,7 @@
 
 import TradePanel from "@/components/TradePanel";
 import NavBar from "@/components/NavBar";
-import { Card, CardContent } from "@/components/ui/card";
+import Trades from "@/components/Trades";
 import { Toaster } from "sonner";
 import { useState } from "react";
 import dynamic from 'next/dynamic';
@@ -36,11 +36,7 @@ export default function TradePage() {
 
       {/* Open trades section */}
       <section className="border-t p-4 max-w-7xl mx-auto w-full">
-        <Card>
-          <CardContent className="py-10 text-center text-muted-foreground">
-            Open Trades Table (coming soon)
-          </CardContent>
-        </Card>
+        <Trades />
       </section>
     </div>
   );

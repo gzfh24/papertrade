@@ -92,7 +92,7 @@ export default function NavBar() {
                     {session.user.name || session.user.email}
                     </span>
                     {balance !== null && (
-                        <span className="text-sm font-mono tabular-nums hidden lg:inline-block">
+                        <span className="text-sm font-medium tabular-nums hidden lg:inline-block">
                         ${balance.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                         </span>
                     )}
