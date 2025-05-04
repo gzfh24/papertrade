@@ -5,10 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState, useEffect, useCallback } from "react";
 import AuthModal from "@/components/AuthModal";
+import { usePathname } from "next/navigation"
 
 const { useSession } = createAuthClient()
 
 export default function NavBar() {
+    const pathname = usePathname();
     const {
         data: session,
         isPending, //loading state
@@ -51,12 +53,25 @@ export default function NavBar() {
         return () => window.removeEventListener('auth:success', handler)
     }, []);
 
+    const getActiveTab = () => {
+        switch (pathname) {
+          case '/trade':
+            return 'trade';
+          case '/portfolio':
+            return 'portfolio';
+          case '/leaderboard':
+            return 'leaderboard';
+          default:
+            return 'trade';
+        }
+    };
+
     return (
         <>
             <nav className="w-full border-b bg-background/70 backdrop-blur sticky top-0 z-40">
             <div className="max-w-7xl mx-auto flex items-center justify-between px-4 h-14">
                 {/* Nav tabs */}
-                <Tabs defaultValue="trade" className="hidden sm:block">
+                <Tabs value={getActiveTab()} className="hidden sm:block">
                 <TabsList className="bg-transparent space-x-6 shadow-none">
                     <TabsTrigger
                     value="trade"
