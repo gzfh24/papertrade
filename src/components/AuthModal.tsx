@@ -59,6 +59,8 @@ async function handleSubmit(e: FormEvent) {
     }
 
     toast.success(tab === 'signin' ? 'Signed in!' : 'Account created!');
+    window.dispatchEvent(new Event('auth:success'));
+
 
     reset();
     onOpenChange(false);

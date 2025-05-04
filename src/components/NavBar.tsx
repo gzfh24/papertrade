@@ -44,10 +44,12 @@ export default function NavBar() {
     }, [fetchBalance]);
     
     useEffect(() => {
-        if (!authOpen) {
-          refetch();
-        }
-      }, [authOpen, refetch]);
+        const handler = () => {
+            refetch();
+        };
+        window.addEventListener('auth:success', handler);
+        return () => window.removeEventListener('auth:success', handler)
+    }, []);
 
     return (
         <>
@@ -77,7 +79,7 @@ export default function NavBar() {
                     asChild
                     className="data-[state=active]:border-b-2 data-[state=active]:border-foreground/80 rounded-none px-0"
                     >
-                    <Link href="/leaderboard">Leaderboards</Link>
+                    <Link href="/leaderboard">Leaderboard</Link>
                     </TabsTrigger>
                 </TabsList>
                 </Tabs>

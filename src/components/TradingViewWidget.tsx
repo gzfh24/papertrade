@@ -35,7 +35,7 @@ function TradingViewWidget({ asset }: WidgetProps) {
             "symbol": "${tvSymbol}",
             "interval": "60",
             "timezone": "America/New_York",
-            "theme": "dark",
+            "theme": "light",
             "style": "1",
             "locale": "en",
             "hide_legend": true,
