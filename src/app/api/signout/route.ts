@@ -6,7 +6,7 @@ export async function POST(req: NextRequest) {
         await auth.api.signOut(
             { headers: req.headers },
         );
-        return NextResponse.json({ message: "Signed out successfully" }, { status: 200 });
+        return NextResponse.redirect(new URL("/trade", req.url), 302);
     } catch (error) {
         console.error("Signout error:", error);
         return NextResponse.json(

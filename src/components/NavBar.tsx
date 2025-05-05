@@ -6,7 +6,6 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState, useEffect, useCallback } from "react";
 import AuthModal from "@/components/AuthModal";
 import { usePathname } from "next/navigation"
-import { useRouter } from "next/navigation";
 
 const { useSession } = createAuthClient()
 
@@ -64,11 +63,6 @@ export default function NavBar() {
             return 'trade';
         }
     };
-    const router = useRouter();
-    async function handleSignOut() {
-        await fetch('/api/signout', { method: 'POST', credentials: 'include' });
-        router.refresh();
-      }
 
     return (
         <>
@@ -117,9 +111,11 @@ export default function NavBar() {
                         ${balance.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                         </span>
                     )}
-                    <Button size="sm" variant="secondary" onClick={handleSignOut}>
-                    Sign out
+                    <form action="/api/signout" method="post">
+                    <Button size="sm" variant="secondary" type="submit">
+                        Sign out
                     </Button>
+                    </form>
                 </div>
                 ) : (
                     <Button size="sm" onClick={() => setAuthOpen(true)}>Connect</Button>
