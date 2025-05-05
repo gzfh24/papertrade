@@ -1,12 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import Portfolio from "@/lib/models/Portfolio";
 import { initDB, requireUser, getMarkPrice } from "@/lib/helpers";
-
-interface RouteParams {
-  params: {
-    id: string;
-  };
-}
 
 const YAHOO_MAP: Record<string, string> = {
   BTCUSD: 'BTC-USD',
@@ -16,8 +10,8 @@ const YAHOO_MAP: Record<string, string> = {
 };
 
 export async function POST(
-  _req: Request, // Keep the Request type from Next.js
-  { params }: RouteParams // Use the defined interface
+  req: NextRequest,
+  { params }: { params: { id: string } }
 ) {
   await initDB();
   const userId = await requireUser();
@@ -27,7 +21,7 @@ export async function POST(
   if (!portfolio)
     return NextResponse.json({ message: "Portfolio not found" }, { status: 404 });
 
-  const { id } = params; // Remove await since params is not a Promise
+  const { id } = params;
   const trade = portfolio.positions.id(id);
   if (!trade || !trade.isOpen)
     return NextResponse.json(
