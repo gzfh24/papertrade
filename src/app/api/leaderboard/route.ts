@@ -67,7 +67,7 @@ export async function GET() {
       },
     },
 
-    /* — convert userId string → ObjectId, then lookup — */
+    /* — convert userId string to ObjectId, then lookup — */
     {
       $addFields: {
         userObjId: { $toObjectId: '$userId' },
@@ -75,7 +75,7 @@ export async function GET() {
     },
     {
       $lookup: {
-        from: 'user',                // Better‑Auth users collection
+        from: 'user',
         localField: 'userObjId',
         foreignField: '_id',
         as: 'u',
