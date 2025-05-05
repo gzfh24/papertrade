@@ -11,7 +11,7 @@ const YAHOO_MAP: Record<string, string> = {
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   await initDB();
   const userId = await requireUser();
@@ -21,7 +21,7 @@ export async function POST(
   if (!portfolio)
     return NextResponse.json({ message: "Portfolio not found" }, { status: 404 });
 
-  const { id } = params;
+  const { id } = await params;
   const trade = portfolio.positions.id(id);
   if (!trade || !trade.isOpen)
     return NextResponse.json(
