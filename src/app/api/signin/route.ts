@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        const { headers, response } = await auth.api.signInEmail({
+        const { response } = await auth.api.signInEmail({
             returnHeaders: true,
             body: {
                 email,

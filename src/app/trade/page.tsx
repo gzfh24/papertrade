@@ -14,8 +14,6 @@ const TradingViewWidget = dynamic(
 );
 
 export default function TradePage() {
-  // Placeholder mark price until you wire the realtime feed
-  const [price] = useState(0);
   const [asset, setAsset] = useState<'BTCUSD' | 'XAUUSD' | 'SPXUSD' | 'NDXUSD'>('BTCUSD');
 
   return (

@@ -9,7 +9,6 @@ import {
   CardTitle,
   CardContent,
 } from '@/components/ui/card';
-import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import NavBar from '@/components/NavBar';

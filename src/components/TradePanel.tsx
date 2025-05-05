@@ -37,11 +37,7 @@ export default function TradePanel({
   onPlaced,
 }: TradePanelProps) {
   /* session -------------------------------------------------------- */
-  const { data: session,
-    isPending, // loading state
-    error, // error object
-    refetch, // refetch the session
-  } = useSession();
+  const { data: session, refetch } = useSession();
   const isLoggedIn = !!session?.user?.id;
 
   /* internal state ------------------------------------------------- */

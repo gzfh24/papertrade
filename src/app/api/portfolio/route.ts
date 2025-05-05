@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 import Portfolio from '@/lib/models/Portfolio';
 import { initDB, requireUser } from '@/lib/helpers';
 
-export async function GET(req: Request) {
+export async function GET() {
   await initDB();
 
   // Better‑Auth helper that throws 401 if there is no logged‑in user

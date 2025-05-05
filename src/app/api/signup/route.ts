@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        const { headers, response } = await auth.api.signUpEmail({
+        const { response } = await auth.api.signUpEmail({
             returnHeaders: true,
             body: {
                 email,

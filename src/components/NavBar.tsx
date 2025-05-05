@@ -13,8 +13,6 @@ export default function NavBar() {
     const pathname = usePathname();
     const {
         data: session,
-        isPending, //loading state
-        error, //error object 
         refetch //refetch the session
     } = useSession()
     const [authOpen, setAuthOpen] = useState(false);
