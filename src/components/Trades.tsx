@@ -131,7 +131,11 @@ export default function Trades() {
       fetchPrices();
     };
     window.addEventListener('trade:placed', h);
-    return () => window.removeEventListener('trade:placed', h);
+    window.addEventListener('auth:success', h);
+    return () => {
+      window.removeEventListener('trade:placed', h);
+      window.removeEventListener('auth:success', h);
+    };
   }, [fetchOpen, fetchPrices]);
 
   /* close */
