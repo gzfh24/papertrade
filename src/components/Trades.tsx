@@ -1,12 +1,7 @@
+// components/Trades.tsx
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-} from '@/components/ui/tabs';
 import {
   Card,
   CardHeader,
@@ -17,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 
-/* ────────────── helpers ────────────── */
+/* ─ helpers ─ */
 type Asset = 'BTCUSD' | 'XAUUSD' | 'SPXUSD' | 'NDXUSD';
 const SYMBOLS: Asset[] = ['BTCUSD', 'XAUUSD', 'SPXUSD', 'NDXUSD'];
 
@@ -30,20 +25,19 @@ interface Trade {
   isLong: boolean;
   leverage: number;
   openedAt: string;
-  closedAt?: string;
   closePrice?: number;
   profit?: number;
 }
 
-const formatUSD = (n: number) =>
+const usd = (n: number) =>
   `$${n.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
 
-const calcLiq = (entry: number, isLong: boolean, lev: number) => {
-  const dist = entry / lev;
-  return isLong ? entry - dist : entry + dist;
+const liq = (entry: number, long: boolean, lev: number) => {
+  const d = entry / lev;
+  return long ? entry - d : entry + d;
 };
 
-/* ────────────── row components ────────────── */
+/* ─ row component ─ */
 function OpenRow({
   t,
   mark,
@@ -64,27 +58,21 @@ function OpenRow({
       <Badge
         variant={t.isLong ? 'default' : 'destructive'}
         className={
-            t.isLong
+          t.isLong
             ? 'col-span-1 justify-center bg-green-600/20 text-green-700'
             : 'col-span-1 justify-center'
         }
-        >
+      >
         {t.isLong ? 'Long' : 'Short'}
-        </Badge>
+      </Badge>
       <span className="text-right">{t.leverage}×</span>
-      <span className="text-right tabular-nums">
-        {t.size.toFixed(4)}
-      </span>
-      <span className="text-right tabular-nums">
-        {formatUSD(posValue)}
-      </span>
-      <span className="text-right">{formatUSD(t.entryPrice)}</span>
-      <span className="text-right">{formatUSD(mark)}</span>
-      <span className={`text-right ${pnlColor}`}>{formatUSD(pnl)}</span>
-      <span className="text-right">
-        {formatUSD(calcLiq(t.entryPrice, t.isLong, t.leverage))}
-      </span>
-      <span className="text-right">{formatUSD(t.margin + pnl)}</span>
+      <span className="text-right tabular-nums">{t.size.toFixed(4)}</span>
+      <span className="text-right tabular-nums">{usd(posValue)}</span>
+      <span className="text-right">{usd(t.entryPrice)}</span>
+      <span className="text-right">{usd(mark)}</span>
+      <span className={`text-right ${pnlColor}`}>{usd(pnl)}</span>
+      <span className="text-right">{usd(liq(t.entryPrice, t.isLong, t.leverage))}</span>
+      <span className="text-right">{usd(t.margin + pnl)}</span>
       <button
         onClick={() => onClose(t._id)}
         className="text-right underline hover:opacity-70"
@@ -95,54 +83,17 @@ function OpenRow({
   );
 }
 
-function ClosedRow({ t }: { t: Trade }) {
-  const pnl = t.profit ?? 0;
-  const pnlColor = pnl > 0 ? 'text-green-600' : pnl < 0 ? 'text-red-600' : '';
-  return (
-    <div className="grid grid-cols-11 gap-2 items-center py-2 text-xs md:text-sm">
-      <span>{t.symbol}</span>
-      <Badge
-        variant={t.isLong ? 'default' : 'destructive'}
-        className={
-            t.isLong
-            ? 'col-span-1 justify-center bg-green-600/20 text-green-700'
-            : 'col-span-1 justify-center'
-        }
-        >
-        {t.isLong ? 'Long' : 'Short'}
-        </Badge>
-      <span className="text-right">{t.leverage}×</span>
-      <span className="text-right tabular-nums">
-        {t.size.toFixed(4)}
-      </span>
-      <span className="text-right tabular-nums">
-        {formatUSD((t.size * (t.closePrice ?? 0)) || 0)}
-      </span>
-      <span className="text-right">{formatUSD(t.entryPrice)}</span>
-      <span className="text-right">{formatUSD(t.closePrice ?? 0)}</span>
-      <span className={`text-right ${pnlColor}`}>{formatUSD(pnl)}</span>
-      <span className="text-right">
-        {new Date(t.closedAt ?? '').toLocaleDateString()}
-      </span>
-      <span className="text-right">{formatUSD(t.margin+pnl)}</span>
-      <span /> {/* empty cell to maintain 11‑col grid */}
-    </div>
-  );
-}
-
-/* ────────────── main component ────────────── */
+/* ─ main component ─ */
 export default function Trades() {
   const [openTrades, setOpenTrades] = useState<Trade[]>([]);
-  const [closedTrades, setClosedTrades] = useState<Trade[]>([]);
   const [marks, setMarks] = useState<Record<Asset, number>>({
     BTCUSD: 0,
     XAUUSD: 0,
     SPXUSD: 0,
     NDXUSD: 0,
   });
-  const [tab, setTab] = useState<'open' | 'history'>('open');
 
-  /* ─ fetch helpers ─ */
+  /* prices poll */
   const fetchPrices = useCallback(async () => {
     const obj: Record<Asset, number> = { BTCUSD: 0, XAUUSD: 0, SPXUSD: 0, NDXUSD: 0 };
     await Promise.all(
@@ -161,37 +112,29 @@ export default function Trades() {
     return () => clearInterval(id);
   }, [fetchPrices]);
 
+  /* open positions */
   const fetchOpen = useCallback(async () => {
     const res = await fetch('/api/trade/open', { cache: 'no-store' });
     const data = await res.json();
     if (res.ok) setOpenTrades(data.positions as Trade[]);
   }, []);
 
-  const fetchClosed = useCallback(async () => {
-    const res = await fetch('/api/trade/closed', { cache: 'no-store' });
-    const data = await res.json();
-    if (res.ok) setClosedTrades(data.positions as Trade[]);
-  }, []);
-
-  /* initial fetch */
   useEffect(() => {
     fetchOpen();
-    fetchClosed();
     fetchPrices();
-  }, [fetchOpen, fetchClosed, fetchPrices]);
+  }, [fetchOpen, fetchPrices]);
 
-  /* refresh on trade events */
+  /* refresh after trade event */
   useEffect(() => {
-    const handler = () => {
+    const h = () => {
       fetchOpen();
-      fetchClosed();
       fetchPrices();
     };
-    window.addEventListener('trade:placed', handler);
-    return () => window.removeEventListener('trade:placed', handler);
-  }, [fetchOpen, fetchClosed, fetchPrices]);
+    window.addEventListener('trade:placed', h);
+    return () => window.removeEventListener('trade:placed', h);
+  }, [fetchOpen, fetchPrices]);
 
-  /* close position */
+  /* close */
   const closeTrade = async (id: string) => {
     const res = await fetch(`/api/trade/close/${id}`, { method: 'POST' });
     if (res.ok) {
@@ -203,68 +146,40 @@ export default function Trades() {
     }
   };
 
+  /* ui */
   return (
     <Card className="shadow-lg rounded-2xl">
       <CardHeader>
-        <CardTitle>Your Trades</CardTitle>
+        <CardTitle>Open Trades</CardTitle>
       </CardHeader>
 
       <CardContent>
-        <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
-          <TabsList className="w-full mb-4">
-            <TabsTrigger value="open" className="flex-1">
-              Open
-            </TabsTrigger>
-            <TabsTrigger value="history" className="flex-1">
-              History
-            </TabsTrigger>
-          </TabsList>
+        {/* header */}
+        <div className="hidden md:grid grid-cols-11 gap-2 text-xs font-medium text-muted-foreground px-1">
+          <span>Asset</span>
+          <span>Direction</span>
+          <span className="text-right">Lev</span>
+          <span className="text-right">Size</span>
+          <span className="text-right">Pos Value</span>
+          <span className="text-right">Entry</span>
+          <span className="text-right">Mark</span>
+          <span className="text-right">PnL</span>
+          <span className="text-right">Liq Price</span>
+          <span className="text-right">Margin</span>
+          <span className="text-right">Close</span>
+        </div>
+        <Separator className="mb-2" />
 
-          {/* header row */}
-          <div className="hidden md:grid grid-cols-11 gap-2 text-xs font-medium text-muted-foreground px-1">
-            <span>Asset</span>
-            <span>Direction</span>
-            <span className="text-right">Leverage</span>
-            <span className="text-right">Size</span>
-            <span className="text-right">Pos&nbsp;Value</span>
-            <span className="text-right">Entry</span>
-            <span className="text-right">Mark</span>
-            <span className="text-right">PnL</span>
-            <span className="text-right">Liq&nbsp;Price</span>
-            <span className="text-right">Margin</span>
-            {tab === 'open' && <span className="text-right">Close</span>}
-          </div>
-          <Separator className="mb-2" />
-
-          {/* open trades */}
-          <TabsContent value="open">
-            {openTrades.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">
-                No open trades
-              </p>
-            ) : (
-              openTrades.map((t) => (
-                <OpenRow
-                  key={t._id}
-                  t={t}
-                  mark={marks[t.symbol]}
-                  onClose={closeTrade}
-                />
-              ))
-            )}
-          </TabsContent>
-
-          {/* history trades */}
-          <TabsContent value="history">
-            {closedTrades.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">
-                No closed trades
-              </p>
-            ) : (
-              closedTrades.map((t) => <ClosedRow key={t._id} t={t} />)
-            )}
-          </TabsContent>
-        </Tabs>
+        {/* rows */}
+        {openTrades.length === 0 ? (
+          <p className="text-center text-muted-foreground py-8">
+            No open trades
+          </p>
+        ) : (
+          openTrades.map((t) => (
+            <OpenRow key={t._id} t={t} mark={marks[t.symbol]} onClose={closeTrade} />
+          ))
+        )}
       </CardContent>
     </Card>
   );
