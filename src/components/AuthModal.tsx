@@ -69,10 +69,8 @@ async function handleSubmit(e: FormEvent) {
 
 return (
     <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) reset(); }}>
-    {/* frosted‑glass overlay */}
     <DialogOverlay className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40" />
 
-    {/* animated card */}
     <DialogContent
         className="z-50 w-[92%] sm:w-full sm:max-w-md rounded-2xl border
                 bg-background p-6 shadow-xl animate-in
@@ -90,7 +88,7 @@ return (
             <TabsTrigger value="signup">Sign&nbsp;Up</TabsTrigger>
         </TabsList>
 
-        {/* ───────────────────────── Sign‑in ───────────────────────── */}
+        {/* sign in */}
         <TabsContent value="signin">
             <form onSubmit={handleSubmit} className="space-y-4">
             <Input
@@ -115,7 +113,7 @@ return (
             </form>
         </TabsContent>
 
-        {/* ───────────────────────── Sign‑up ───────────────────────── */}
+        {/* sign up */}
         <TabsContent value="signup">
             <form onSubmit={handleSubmit} className="space-y-4">
             <Input

@@ -1,10 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getMarkPrice } from '@/lib/helpers';
 
-/**
- * Internal → Yahoo Finance symbol map
- * (BTCUSD → "BTC-USD",   SPXUSD → "^GSPC", etc.)
- */
+// map of symbols to Yahoo Finance symbols
 const YAHOO_MAP: Record<string, string> = {
   BTCUSD: 'BTC-USD',
   XAUUSD: 'GC=F',   // gold futures
@@ -34,7 +31,7 @@ export async function GET(req: Request) {
     return NextResponse.json(
       { price },
       {
-        // prevent edge/global caching
+        // prevent global caching
         headers: { 'Cache-Control': 'no-store' },
       }
     );

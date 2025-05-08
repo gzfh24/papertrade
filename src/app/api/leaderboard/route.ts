@@ -7,7 +7,7 @@ export async function GET() {
   await initDB();
 
   const topTen = await Portfolio.aggregate([
-    /* — keep only closed positions — */
+    // only closed positions
     {
       $addFields: {
         closed: {
@@ -20,7 +20,7 @@ export async function GET() {
       },
     },
 
-    /* — stats per portfolio — */
+    // stats
     {
       $addFields: {
         pnl: { $sum: '$closed.profit' },
@@ -67,7 +67,6 @@ export async function GET() {
       },
     },
 
-    /* — convert userId string to ObjectId, then lookup — */
     {
       $addFields: {
         userObjId: { $toObjectId: '$userId' },
@@ -83,11 +82,11 @@ export async function GET() {
     },
     { $addFields: { username: { $first: '$u.name' } } },
 
-    /* — sort & limit — */
+    // sort and show top 10
     { $sort: { pnl: -1 } },
     { $limit: 10 },
 
-    /* — fields to return — */
+    // return fields
     {
       $project: {
         _id: 0,

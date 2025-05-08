@@ -15,7 +15,6 @@ import AuthModal from '@/components/AuthModal';
 
 const { useSession } = createAuthClient();
 
-/* ----------------------------- types ----------------------------- */
 interface LeaderboardEntry {
   userId: string;
   username: string;
@@ -25,11 +24,9 @@ interface LeaderboardEntry {
   winRate: number;
 }
 
-/* --------------------------- helpers ----------------------------- */
 const usd = (n: number) =>
   `$${n.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
 
-/* --------------------------- component --------------------------- */
 export default function LeaderboardPage() {
   const { data: session } = useSession();
   const currentId = session?.user?.id;

@@ -16,7 +16,6 @@ export async function POST(
   await initDB();
   const userId = await requireUser();
 
-  // 1. locate portfolio
   const portfolio = await Portfolio.findOne({ userId });
   if (!portfolio)
     return NextResponse.json({ message: "Portfolio not found" }, { status: 404 });
@@ -29,7 +28,7 @@ export async function POST(
       { status: 404 }
     );
 
-  // 2. fetch current mark-price for the trade’s symbol
+  // fetch current mark price for the trade’s symbol
   const closePrice = await getMarkPrice(YAHOO_MAP[trade.symbol]);
   if (closePrice == null)
     return NextResponse.json(
@@ -37,13 +36,12 @@ export async function POST(
       { status: 502 }
     );
 
-  // 3. PnL calculation
   const pnl =
     (trade.isLong
       ? closePrice - trade.entryPrice
       : trade.entryPrice - closePrice) * trade.size;
 
-  // 4. mutate embedded doc + balance
+  // mutate document and save
   trade.isOpen = false;
   trade.closedAt = new Date();
   trade.closePrice = closePrice;

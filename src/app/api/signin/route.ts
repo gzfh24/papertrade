@@ -1,4 +1,3 @@
-// app/api/signin/route.ts
 import { auth } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 

@@ -15,7 +15,6 @@ import { createAuthClient } from 'better-auth/react';
 
 const { useSession } = createAuthClient();
 
-/* ─ helpers ─ */
 type Asset = 'BTCUSD' | 'XAUUSD' | 'SPXUSD' | 'NDXUSD';
 const SYMBOLS: Asset[] = ['BTCUSD', 'XAUUSD', 'SPXUSD', 'NDXUSD'];
 
@@ -40,7 +39,7 @@ const liq = (entry: number, long: boolean, lev: number) => {
   return long ? entry - d : entry + d;
 };
 
-/* ─ row component ─ */
+// row component
 function OpenRow({
   t,
   mark,
@@ -86,7 +85,7 @@ function OpenRow({
   );
 }
 
-/* ─ main component ─ */
+// main trades component
 export default function Trades() {
   const [openTrades, setOpenTrades] = useState<Trade[]>([]);
   const [marks, setMarks] = useState<Record<Asset, number>>({
@@ -98,7 +97,7 @@ export default function Trades() {
 
   const { data: session } = useSession();
 
-  /* prices poll */
+  // fetch prices
   const fetchPrices = useCallback(async () => {
     const obj: Record<Asset, number> = { BTCUSD: 0, XAUUSD: 0, SPXUSD: 0, NDXUSD: 0 };
     await Promise.all(
@@ -117,7 +116,7 @@ export default function Trades() {
     return () => clearInterval(id);
   }, [fetchPrices]);
 
-  /* open positions */
+  // fetch open trades
   const fetchOpen = useCallback(async () => {
     const res = await fetch('/api/trade/open', { cache: 'no-store' });
     const data = await res.json();
@@ -129,7 +128,7 @@ export default function Trades() {
     fetchPrices();
   }, [fetchOpen, fetchPrices]);
 
-  /* refresh after trade event */
+  // refresh when trade is opened
   useEffect(() => {
     const h = () => {
       fetchOpen();
@@ -143,7 +142,6 @@ export default function Trades() {
     };
   }, [fetchOpen, fetchPrices]);
 
-  /* close */
   const closeTrade = async (id: string) => {
     const res = await fetch(`/api/trade/close/${id}`, { method: 'POST' });
     if (res.ok) {
@@ -155,7 +153,6 @@ export default function Trades() {
     }
   };
 
-  /* ui */
   return (
     <Card className="shadow-lg rounded-2xl">
       <CardHeader>

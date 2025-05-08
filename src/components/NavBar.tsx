@@ -1,4 +1,3 @@
-// components/NavBar.tsx
 import Link from "next/link";
 import { createAuthClient } from "better-auth/react"
 import { Button } from "@/components/ui/button";
@@ -78,7 +77,7 @@ export default function NavBar({
         <>
             <nav className="w-full border-b bg-background/70 backdrop-blur sticky top-0 z-40">
             <div className="max-w-7xl mx-auto flex items-center justify-between px-4 h-14">
-                {/* Nav tabs */}
+                {/* tabs */}
                 <Tabs value={getActiveTab()} className="hidden sm:block">
                 <TabsList className="bg-transparent space-x-6 shadow-none">
                     <TabsTrigger
@@ -107,7 +106,7 @@ export default function NavBar({
                 </TabsList>
                 </Tabs>
 
-                {/* Auth controls */}
+                {/* auth */}
                 {session?.user?.id ? (
                 <div className="flex items-center gap-4">
                     <span

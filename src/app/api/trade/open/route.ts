@@ -10,7 +10,7 @@ const YAHOO_MAP: Record<string, string> = {
   NDXUSD: '^NDX',   // Nasdaq‑100
 };
 
-// GET /api/trade/open  ── all open positions
+// get open trades
 export async function GET() {
   await initDB();
   const userId = await requireUser();
@@ -24,7 +24,7 @@ export async function GET() {
   });
 }
 
-// POST /api/trade/open  ── open a new position
+// open a new trade
 export async function POST(req: Request) {
   await initDB();
   const userId = await requireUser();
@@ -52,7 +52,7 @@ export async function POST(req: Request) {
   if (!base) base = await Portfolio.create({ userId });
 
   const portfolio = await Portfolio.findOneAndUpdate(
-    { _id: base._id, balance: { $gte: margin } },   // guard
+    { _id: base._id, balance: { $gte: margin } }, // ensure sufficient balance
     {
       $inc: { balance: -margin },
       $push: {
@@ -68,10 +68,9 @@ export async function POST(req: Request) {
         },
       },
     },
-    { new: true },                                  // return updated doc
+    { new: true },
   );
 
-  // If guard failed, portfolio is null → user lacked funds
   if (!portfolio) {
     return NextResponse.json(
       { message: "Insufficient balance for margin requirement" },

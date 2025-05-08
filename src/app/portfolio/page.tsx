@@ -18,7 +18,6 @@ import { createAuthClient } from 'better-auth/react';
 
 const { useSession } = createAuthClient()
 
-/* ‑‑ types ‑‑ */
 type Asset = 'BTCUSD' | 'XAUUSD' | 'SPXUSD' | 'NDXUSD';
 interface Trade {
   _id: string;
@@ -33,11 +32,9 @@ interface Trade {
   closedAt: string;
 }
 
-/* ‑‑ constants ‑‑ */
 const PAGE_SIZE = 10;
 const tz = 'America/New_York';
 
-/* ‑‑ main page ‑‑ */
 export default function PortfolioPage() {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [page, setPage] = useState(1);
@@ -47,7 +44,7 @@ export default function PortfolioPage() {
     data: session,
   } = useSession()
 
-  /* fetch closed trades once */
+  // fetch closed trades
   useEffect(() => {
     if (!session?.user?.id) {
       router.push('/trade');
@@ -60,7 +57,7 @@ export default function PortfolioPage() {
     }
   }, []);
 
-  /* derived metrics */
+  // calculations useMemo to avoid re-calculating on every render
   const { volume, totalPnl, winRate } = useMemo(() => {
     const vol = trades.reduce(
       (acc, t) =>
@@ -75,15 +72,12 @@ export default function PortfolioPage() {
     return { volume: vol, totalPnl: pnl, winRate: rate };
   }, [trades]);
 
-  /* pagination slice */
   const lastPage = Math.max(1, Math.ceil(trades.length / PAGE_SIZE));
   const slice = trades.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  /* helpers */
   const fmt = (n: number) =>
     `$${n.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
 
-  /* render */
   return (
     <div className="min-h-screen flex flex-col">
       <NavBar onAuthChange={() => {}}/>
@@ -162,7 +156,7 @@ export default function PortfolioPage() {
               ))
             )}
 
-            {/* pagination */}
+            {/* pages */}
             {trades.length > PAGE_SIZE && (
               <div className="flex justify-end mt-4 gap-2">
                 <Button
@@ -209,7 +203,6 @@ export default function PortfolioPage() {
   );
 }
 
-/* helper card component */
 function StatCard({
   title,
   value,

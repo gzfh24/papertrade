@@ -202,7 +202,7 @@ export default function TradePanel({
               </span>
             </div>
 
-            {/* action button */}
+            {/* button */}
             {isLoggedIn ? (
               <Button
                 disabled={loading}
