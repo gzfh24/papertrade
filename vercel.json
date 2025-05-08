@@ -1,10 +1,8 @@
 {
-    "cron": {
-      "jobs": [
-        {
-          "path": "/api/cron/liquidation",
-          "schedule": "*/5 * * * *"
-        }
-      ]
-    }
+    "crons": [
+      {
+        "path": "/api/cron/liquidation",
+        "schedule": "*/5 * * * *"
+      }
+    ]
   }
