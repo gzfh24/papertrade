@@ -2,7 +2,7 @@
     "crons": [
       {
         "path": "/api/cron/liquidation",
-        "schedule": "*/5 * * * *"
+        "schedule": "0 0,12 * * *"
       }
     ]
   }
