@@ -13,9 +13,6 @@ export const auth = betterAuth({
   session: {
     cookieCache: {
         enabled: true,
-        // Cache duration in seconds.
-        // set to 5 mins for development; 
-        // could be a week or longer in production
         maxAge: 5 * 60 
     }
   },
@@ -24,6 +21,6 @@ export const auth = betterAuth({
     },
     secret: process.env.AUTH_SECRET,
     plugins: [
-        nextCookies() // keep this last in `plugins` array
+        nextCookies()
     ]
 });

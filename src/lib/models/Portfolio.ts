@@ -1,6 +1,5 @@
 import mongoose, { Schema, Document } from "mongoose";
 
-// Trade Schema (embedded)
 interface ITrade {
     symbol: string;
     margin: number;
@@ -29,7 +28,6 @@ const TradeSchema: Schema = new Schema({
     profit: { type: Number, default: null },
 });
 
-// Portfolio Schema
 export interface IPortfolio extends Document {
     userId: string;
     balance: number;
@@ -38,9 +36,9 @@ export interface IPortfolio extends Document {
 }
 
 const PortfolioSchema: Schema = new Schema({
-    userId: { type: String, required: true }, // References user._id from Better Auth
+    userId: { type: String, required: true },
     balance: { type: Number, required: true, default: 10000 },
-    positions: [TradeSchema], // Array of trades (perps positions)
+    positions: [TradeSchema],
     createdAt: { type: Date, default: Date.now },
 }, {
     collection: "portfolios"
