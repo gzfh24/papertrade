@@ -1,4 +1,3 @@
-// app/portfolio/page.tsx
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
@@ -9,14 +8,14 @@ import {
   CardTitle,
   CardContent,
 } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import NavBar from '@/components/NavBar';
+import ConfirmResetModal from '@/components/ConfirmResetModal';
+import StatCard from '@/components/StatCard';
 import { useRouter } from 'next/navigation';
-
 import { createAuthClient } from 'better-auth/react';
 
-const { useSession } = createAuthClient()
+const { useSession } = createAuthClient();
 
 type Asset = 'BTCUSD' | 'XAUUSD' | 'SPXUSD' | 'NDXUSD';
 interface Trade {
@@ -38,125 +37,131 @@ const tz = 'America/New_York';
 export default function PortfolioPage() {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [page, setPage] = useState(1);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const router = useRouter();
+  const { data: session, isPending } = useSession();
 
-  const {
-    data: session,
-  } = useSession()
-
-  // fetch closed trades
   useEffect(() => {
-    if (!session?.user?.id) {
+    if (!session?.user?.id && !isPending) {
       router.push('/trade');
-    } else {
-      (async () => {
-        const res = await fetch('/api/trade/closed', { cache: 'no-store' });
-        const data = await res.json();
-        if (res.ok) setTrades(data.positions as Trade[]);
-      })();
+      return;
     }
-  }, []);
+    (async () => {
+      const res = await fetch('/api/trade/closed', { cache: 'no-store' });
+      const data = await res.json();
+      if (res.ok) setTrades(data.positions as Trade[]);
+    })();
+  }, [session?.user?.id, isPending, router]);
 
-  // calculations useMemo to avoid re-calculating on every render
   const { volume, totalPnl, winRate } = useMemo(() => {
     const vol = trades.reduce(
-      (acc, t) =>
-        acc +
-        (t.margin * t.leverage +
-          (t.margin + (t.profit ?? 0)) * t.leverage),
+      (a, t) => a + t.margin * t.leverage + (t.margin + t.profit) * t.leverage,
       0
     );
-    const pnl = trades.reduce((acc, t) => acc + (t.profit ?? 0), 0);
-    const wins = trades.filter((t) => (t.profit ?? 0) > 0).length;
+    const pnl = trades.reduce((a, t) => a + t.profit, 0);
+    const wins = trades.filter((t) => t.profit > 0).length;
     const rate = trades.length ? (wins / trades.length) * 100 : 0;
     return { volume: vol, totalPnl: pnl, winRate: rate };
   }, [trades]);
 
   const lastPage = Math.max(1, Math.ceil(trades.length / PAGE_SIZE));
   const slice = trades.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-
   const fmt = (n: number) =>
     `$${n.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
 
   return (
     <div className="min-h-screen flex flex-col">
-      <NavBar onAuthChange={() => {}}/>
+      <NavBar onAuthChange={() => {}} />
 
       <main className="max-w-7xl mx-auto w-full p-4 space-y-6 flex-1">
-        {/* top stats */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <StatCard title="Volume" value={fmt(volume)} />
           <StatCard
             title="Total Profit"
             value={fmt(totalPnl)}
-            valueColor={totalPnl > 0 ? 'text-green-600' : totalPnl < 0 ? 'text-red-600' : ''}
+            valueColor={
+              totalPnl > 0 ? 'text-green-600' : totalPnl < 0 ? 'text-red-600' : ''
+            }
           />
           <StatCard title="Win Rate" value={`${winRate.toFixed(2)}%`} />
         </div>
 
-        {/* closed trades table */}
-        <Card>
+        <Card className="rounded-xs shadow-lg">
           <CardHeader>
             <CardTitle>Closed Trades</CardTitle>
           </CardHeader>
           <CardContent>
-            {/* header */}
-            <div className="hidden md:grid grid-cols-9 gap-x-3 text-xs font-medium text-muted-foreground px-1">
-              <span>Time</span>
-              <span>Asset</span>
-              <span>Direction</span>
-              <span className="text-right">Margin</span>
-              <span className="text-right">Leverage</span>
-              <span className="text-right">Size</span>
-              <span className="text-right">Entry</span>
-              <span className="text-right">Close</span>
-              <span className="text-right">PnL</span>
+            <div className="overflow-x-auto">
+              <table className="w-full table-auto min-w-[max-content] text-xs md:text-sm">
+                <thead className="text-muted-foreground">
+                  <tr className="border-b border-muted-foreground/40">
+                    <th className="px-2 py-1 text-left whitespace-nowrap">Time</th>
+                    <th className="px-2 py-1 text-left whitespace-nowrap">Asset</th>
+                    <th className="px-2 py-1 text-left whitespace-nowrap">Direction</th>
+                    <th className="px-2 py-1 text-right whitespace-nowrap">Margin</th>
+                    <th className="px-2 py-1 text-right whitespace-nowrap">Leverage</th>
+                    <th className="px-2 py-1 text-right whitespace-nowrap">Size</th>
+                    <th className="px-2 py-1 text-right whitespace-nowrap">Entry</th>
+                    <th className="px-2 py-1 text-right whitespace-nowrap">Close</th>
+                    <th className="px-2 py-1 text-right whitespace-nowrap">PnL</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {slice.length === 0 ? (
+                    <tr>
+                      <td colSpan={9} className="py-8 text-center text-muted-foreground">
+                        No closed trades
+                      </td>
+                    </tr>
+                  ) : (
+                    slice.map((t) => (
+                      <tr key={t._id}>
+                        <td className="px-2 py-3 whitespace-nowrap">
+                          {format(new Date(t.closedAt), 'MM/dd/yyyy - HH:mm:ss', {
+                            timeZone: tz,
+                          })}
+                        </td>
+                        <td className="px-2 py-3 whitespace-nowrap">{t.symbol}</td>
+                        <td
+                          className={`px-2 py-3 whitespace-nowrap ${
+                            t.isLong ? 'text-green-600' : 'text-red-600'
+                          }`}
+                        >
+                          {t.isLong ? 'Long' : 'Short'}
+                        </td>
+                        <td className="px-2 py-3 text-right whitespace-nowrap">
+                          {fmt(t.margin)}
+                        </td>
+                        <td className="px-2 py-3 text-right whitespace-nowrap">
+                          {t.leverage}×
+                        </td>
+                        <td className="px-2 py-3 text-right tabular-nums whitespace-nowrap">
+                          {t.size.toFixed(4)}
+                        </td>
+                        <td className="px-2 py-3 text-right whitespace-nowrap">
+                          {fmt(t.entryPrice)}
+                        </td>
+                        <td className="px-2 py-3 text-right whitespace-nowrap">
+                          {fmt(t.closePrice)}
+                        </td>
+                        <td
+                          className={`px-2 py-3 text-right whitespace-nowrap ${
+                            t.profit > 0
+                              ? 'text-green-600'
+                              : t.profit < 0
+                              ? 'text-red-600'
+                              : ''
+                          }`}
+                        >
+                          {fmt(t.profit)}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
-            <Separator className="mb-2" />
 
-            {/* rows */}
-            {slice.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">
-                No closed trades
-              </p>
-            ) : (
-              slice.map((t) => (
-                <div
-                  key={t._id}
-                  className="grid grid-cols-9 gap-x-3 items-center py-2 text-xs md:text-sm"
-                >
-                  <span>
-                    {format(new Date(t.closedAt), 'MM/dd/yyyy - HH:mm:ss', {
-                      timeZone: tz,
-                    })}
-                  </span>
-                  <span>{t.symbol}</span>
-                  <span className={t.isLong ? 'text-green-600' : 'text-red-600'}>
-                    {t.isLong ? 'Long' : 'Short'}
-                  </span>
-                  <span className="text-right">{fmt(t.margin)}</span>
-                  <span className="text-right">{t.leverage}×</span>
-                  <span className="text-right font-mono">
-                    {t.size.toFixed(4)}
-                  </span>
-                  <span className="text-right">{fmt(t.entryPrice)}</span>
-                  <span className="text-right">{fmt(t.closePrice)}</span>
-                  <span
-                    className={
-                      t.profit && t.profit !== 0
-                        ? t.profit > 0
-                          ? 'text-green-600 text-right'
-                          : 'text-red-600 text-right'
-                        : 'text-right'
-                    }
-                  >
-                    {fmt(t.profit ?? 0)}
-                  </span>
-                </div>
-              ))
-            )}
-
-            {/* pages */}
             {trades.length > PAGE_SIZE && (
               <div className="flex justify-end mt-4 gap-2">
                 <Button
@@ -171,7 +176,7 @@ export default function PortfolioPage() {
                   size="sm"
                   variant="secondary"
                   disabled={page === 1}
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  onClick={() => setPage((p) => p - 1)}
                 >
                   Prev
                 </Button>
@@ -182,7 +187,7 @@ export default function PortfolioPage() {
                   size="sm"
                   variant="secondary"
                   disabled={page === lastPage}
-                  onClick={() => setPage((p) => Math.min(lastPage, p + 1))}
+                  onClick={() => setPage((p) => p + 1)}
                 >
                   Next
                 </Button>
@@ -196,30 +201,26 @@ export default function PortfolioPage() {
                 </Button>
               </div>
             )}
+
+            <Button
+              variant="destructive"
+              className="mt-6 ml-auto block"
+              onClick={() => setConfirmOpen(true)}
+            >
+              Restart
+            </Button>
           </CardContent>
         </Card>
       </main>
-    </div>
-  );
-}
 
-function StatCard({
-  title,
-  value,
-  valueColor = '',
-}: {
-  title: string;
-  value: string;
-  valueColor?: string;
-}) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-sm">{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className={`text-2xl font-semibold ${valueColor}`}>{value}</p>
-      </CardContent>
-    </Card>
+      <ConfirmResetModal
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        onConfirm={async () => {
+          await fetch('/api/portfolio', { method: 'DELETE', credentials: 'include' });
+          window.location.reload();
+        }}
+      />
+    </div>
   );
 }

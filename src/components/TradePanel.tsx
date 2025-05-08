@@ -114,9 +114,9 @@ export default function TradePanel({
   return (
     <>
       <aside className="w-full max-w-[340px] xl:max-w-[380px] ml-auto xl:ml-8 pt-4">
-        <Card className="shadow-lg rounded-2xl">
+        <Card className="shadow-lg rounded-xs">
           <CardHeader>
-            <CardTitle className="text-center">New Position</CardTitle>
+            <CardTitle className="text-center">Open Trade</CardTitle>
           </CardHeader>
 
           <CardContent>

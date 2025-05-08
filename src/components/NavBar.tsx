@@ -78,14 +78,14 @@ export default function NavBar({
             <nav className="w-full border-b bg-background/70 backdrop-blur sticky top-0 z-40">
             <div className="max-w-7xl mx-auto flex items-center justify-between px-4 h-14">
                 {/* tabs */}
-                <Tabs value={getActiveTab()} className="hidden sm:block">
+                <Tabs value={getActiveTab()}>
                 <TabsList className="bg-transparent space-x-6 shadow-none">
                     <TabsTrigger
                     value="trade"
                     asChild
                     className="data-[state=active]:border-b-2 data-[state=active]:border-foreground/80 rounded-none px-0"
                     >
-                    <Link href="/trade">Trade</Link>
+                    <Link href="/trade" className="hover:border-b-2 hover:border-foreground/50 transition-all ease-in-out duration-200">Trade</Link>
                     </TabsTrigger>
 
                     <TabsTrigger
@@ -93,7 +93,7 @@ export default function NavBar({
                     asChild
                     className="data-[state=active]:border-b-2 data-[state=active]:border-foreground/80 rounded-none px-0"
                     >
-                    <Link href="/portfolio">Portfolio</Link>
+                    <Link href="/portfolio" className="hover:border-b-2 hover:border-foreground/50 transition-all ease-in-out duration-200">Portfolio</Link>
                     </TabsTrigger>
 
                     <TabsTrigger
@@ -101,7 +101,7 @@ export default function NavBar({
                     asChild
                     className="data-[state=active]:border-b-2 data-[state=active]:border-foreground/80 rounded-none px-0"
                     >
-                    <Link href="/leaderboard">Leaderboard</Link>
+                    <Link href="/leaderboard" className="hover:border-b-2 hover:border-foreground/50 transition-all ease-in-out duration-200">Leaderboard</Link>
                     </TabsTrigger>
                 </TabsList>
                 </Tabs>

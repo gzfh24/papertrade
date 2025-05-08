@@ -51,8 +51,7 @@ function TradingViewWidget({ asset }: WidgetProps) {
     return (
         <div
         ref={container}
-        className="tradingview-widget-container h-full w-full"
-        style={{ borderRadius: '4px', overflow: 'hidden' }}
+        className="tradingview-widget-container h-full w-full rounded-xs overflow-hidden shadow-lg"
         >
         <div className="tradingview-widget-container__widget h-full w-full" />
         </div>

@@ -1,4 +1,3 @@
-// components/Trades.tsx
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -9,7 +8,6 @@ import {
   CardContent,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { createAuthClient } from 'better-auth/react';
 
@@ -39,53 +37,6 @@ const liq = (entry: number, long: boolean, lev: number) => {
   return long ? entry - d : entry + d;
 };
 
-// row component
-function OpenRow({
-  t,
-  mark,
-  onClose,
-}: {
-  t: Trade;
-  mark: number;
-  onClose: (id: string) => void;
-}) {
-  const posValue = t.size * mark;
-  const pnl =
-    (t.isLong ? mark - t.entryPrice : t.entryPrice - mark) * t.size;
-  const pnlColor = pnl > 0 ? 'text-green-600' : pnl < 0 ? 'text-red-600' : '';
-
-  return (
-    <div className="grid grid-cols-11 gap-2 items-center py-2 text-xs md:text-sm">
-      <span>{t.symbol}</span>
-      <Badge
-        variant={t.isLong ? 'default' : 'destructive'}
-        className={
-          t.isLong
-            ? 'col-span-1 justify-center bg-green-600/20 text-green-700'
-            : 'col-span-1 justify-center'
-        }
-      >
-        {t.isLong ? 'Long' : 'Short'}
-      </Badge>
-      <span className="text-right">{t.leverage}×</span>
-      <span className="text-right tabular-nums">{t.size.toFixed(4)}</span>
-      <span className="text-right tabular-nums">{usd(posValue)}</span>
-      <span className="text-right">{usd(t.entryPrice)}</span>
-      <span className="text-right">{usd(mark)}</span>
-      <span className={`text-right ${pnlColor}`}>{usd(pnl)}</span>
-      <span className="text-right">{usd(liq(t.entryPrice, t.isLong, t.leverage))}</span>
-      <span className="text-right">{usd(t.margin + pnl)}</span>
-      <button
-        onClick={() => onClose(t._id)}
-        className="text-right underline hover:opacity-70"
-      >
-        Close
-      </button>
-    </div>
-  );
-}
-
-// main trades component
 export default function Trades() {
   const [openTrades, setOpenTrades] = useState<Trade[]>([]);
   const [marks, setMarks] = useState<Record<Asset, number>>({
@@ -94,10 +45,8 @@ export default function Trades() {
     SPXUSD: 0,
     NDXUSD: 0,
   });
-
   const { data: session } = useSession();
 
-  // fetch prices
   const fetchPrices = useCallback(async () => {
     const obj: Record<Asset, number> = { BTCUSD: 0, XAUUSD: 0, SPXUSD: 0, NDXUSD: 0 };
     await Promise.all(
@@ -110,13 +59,6 @@ export default function Trades() {
     setMarks(obj);
   }, []);
 
-  useEffect(() => {
-    fetchPrices();
-    const id = setInterval(fetchPrices, 5_000);
-    return () => clearInterval(id);
-  }, [fetchPrices]);
-
-  // fetch open trades
   const fetchOpen = useCallback(async () => {
     const res = await fetch('/api/trade/open', { cache: 'no-store' });
     const data = await res.json();
@@ -124,21 +66,25 @@ export default function Trades() {
   }, []);
 
   useEffect(() => {
-    if (session?.user?.id) fetchOpen();
     fetchPrices();
-  }, [fetchOpen, fetchPrices]);
+    const iv = setInterval(fetchPrices, 5000);
+    return () => clearInterval(iv);
+  }, [fetchPrices]);
 
-  // refresh when trade is opened
   useEffect(() => {
-    const h = () => {
+    if (session?.user?.id) fetchOpen();
+  }, [session?.user?.id, fetchOpen]);
+
+  useEffect(() => {
+    const handler = () => {
       fetchOpen();
       fetchPrices();
     };
-    window.addEventListener('trade:placed', h);
-    window.addEventListener('auth:success', h);
+    window.addEventListener('trade:placed', handler);
+    window.addEventListener('auth:success', handler);
     return () => {
-      window.removeEventListener('trade:placed', h);
-      window.removeEventListener('auth:success', h);
+      window.removeEventListener('trade:placed', handler);
+      window.removeEventListener('auth:success', handler);
     };
   }, [fetchOpen, fetchPrices]);
 
@@ -154,38 +100,96 @@ export default function Trades() {
   };
 
   return (
-    <Card className="shadow-lg rounded-2xl">
+    <Card className="shadow-lg rounded-xs">
       <CardHeader>
         <CardTitle>Open Trades</CardTitle>
       </CardHeader>
-
       <CardContent>
-        {/* header */}
-        <div className="hidden md:grid grid-cols-11 gap-2 text-xs font-medium text-muted-foreground px-1">
-          <span>Asset</span>
-          <span>Direction</span>
-          <span className="text-right">Lev</span>
-          <span className="text-right">Size</span>
-          <span className="text-right">Pos Value</span>
-          <span className="text-right">Entry</span>
-          <span className="text-right">Mark</span>
-          <span className="text-right">PnL</span>
-          <span className="text-right">Liq Price</span>
-          <span className="text-right">Margin</span>
-          <span className="text-right">Close</span>
+        <div className="overflow-x-auto">
+          <table className="w-full table-auto min-w-[max-content] text-xs md:text-sm">
+            <thead className="text-muted-foreground">
+              <tr className="border-b border-muted-foreground/40">
+                <th className="px-2 py-1 text-left whitespace-nowrap">Asset</th>
+                <th className="px-2 py-1 text-left whitespace-nowrap">Direction</th>
+                <th className="px-2 py-1 text-right whitespace-nowrap">Leverage</th>
+                <th className="px-2 py-1 text-right whitespace-nowrap">Size</th>
+                <th className="px-2 py-1 text-right whitespace-nowrap">Value</th>
+                <th className="px-2 py-1 text-right whitespace-nowrap">Entry</th>
+                <th className="px-2 py-1 text-right whitespace-nowrap">Mark</th>
+                <th className="px-2 py-1 text-right whitespace-nowrap">PnL</th>
+                <th className="px-2 py-1 text-right whitespace-nowrap">Liq Price</th>
+                <th className="px-2 py-1 text-right whitespace-nowrap">Margin</th>
+                <th className="px-2 py-1 text-right whitespace-nowrap">Close</th>
+              </tr>
+            </thead>
+            <tbody>
+              {openTrades.length === 0 ? (
+                <tr>
+                  <td colSpan={11} className="py-8 text-center text-muted-foreground">
+                    No open trades
+                  </td>
+                </tr>
+              ) : (
+                openTrades.map((t) => {
+                  const mark = marks[t.symbol];
+                  const posValue = t.size * mark;
+                  const pnl =
+                    (t.isLong ? mark - t.entryPrice : t.entryPrice - mark) * t.size;
+                  const pnlColor = pnl > 0 ? 'text-green-600' : pnl < 0 ? 'text-red-600' : '';
+                  return (
+                    <tr key={t._id}>
+                      <td className="px-2 py-3 whitespace-nowrap">{t.symbol}</td>
+                      <td className="px-2 py-3 whitespace-nowrap">
+                        <Badge
+                          variant={t.isLong ? 'default' : 'destructive'}
+                          className={
+                            t.isLong
+                              ? 'bg-green-600/20 text-green-700 px-1'
+                              : 'px-1'
+                          }
+                        >
+                          {t.isLong ? 'Long' : 'Short'}
+                        </Badge>
+                      </td>
+                      <td className="px-2 py-3 text-right whitespace-nowrap">
+                        {t.leverage}×
+                      </td>
+                      <td className="px-2 py-3 text-right tabular-nums whitespace-nowrap">
+                        {t.size.toFixed(4)}
+                      </td>
+                      <td className="px-2 py-3 text-right tabular-nums whitespace-nowrap">
+                        {usd(posValue)}
+                      </td>
+                      <td className="px-2 py-3 text-right whitespace-nowrap">
+                        {usd(t.entryPrice)}
+                      </td>
+                      <td className="px-2 py-3 text-right whitespace-nowrap">
+                        {usd(mark)}
+                      </td>
+                      <td className={`px-2 py-3 text-right whitespace-nowrap ${pnlColor}`}>
+                        {usd(pnl)}
+                      </td>
+                      <td className="px-2 py-3 text-right whitespace-nowrap">
+                        {usd(liq(t.entryPrice, t.isLong, t.leverage))}
+                      </td>
+                      <td className="px-2 py-3 text-right whitespace-nowrap">
+                        {usd(t.margin + pnl)}
+                      </td>
+                      <td className="px-2 py-3 text-right whitespace-nowrap">
+                        <button
+                          onClick={() => closeTrade(t._id)}
+                          className="underline hover:opacity-70"
+                        >
+                          Close
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
         </div>
-        <Separator className="mb-2" />
-
-        {/* rows */}
-        {openTrades.length === 0 ? (
-          <p className="text-center text-muted-foreground py-8">
-            No open trades
-          </p>
-        ) : (
-          openTrades.map((t) => (
-            <OpenRow key={t._id} t={t} mark={marks[t.symbol]} onClose={closeTrade} />
-          ))
-        )}
       </CardContent>
     </Card>
   );

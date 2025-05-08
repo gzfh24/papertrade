@@ -16,3 +16,13 @@ export async function GET() {
     positions: portfolio.positions ?? [],
   });
 }
+
+export async function DELETE() {
+  await initDB();
+  const userId = await requireUser();
+
+  await Portfolio.deleteOne({ userId });
+  await Portfolio.create({ userId, balance: 10000 });
+
+  return NextResponse.json({ message: 'Portfolio reset' });
+}
