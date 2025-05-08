@@ -80,7 +80,7 @@ return (
     >
         <DialogHeader>
         <DialogTitle className="text-center text-2xl font-semibold tracking-tight">
-            {tab === 'signin' ? 'Welcome back' : 'Create an account'}
+            {tab === 'signin' ? 'Sign in to continue' : 'Create an account'}
         </DialogTitle>
         </DialogHeader>
 
