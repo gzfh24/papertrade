@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { createAuthClient } from 'better-auth/react';
+import AuthModal from '@/components/AuthModal';
 
 const { useSession } = createAuthClient();
 
@@ -33,6 +34,8 @@ export default function LeaderboardPage() {
   const { data: session } = useSession();
   const currentId = session?.user?.id;
 
+  const [authOpen, setAuthOpen] = useState(false);
+
   const [raw, setRaw] = useState<LeaderboardEntry[]>([]);
 
   useEffect(() => {
@@ -53,7 +56,7 @@ export default function LeaderboardPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <NavBar />
+      <NavBar onAuthChange={setAuthOpen}/>
 
       <main className="max-w-4xl mx-auto w-full p-4 space-y-6 flex-1">
         <Card>
@@ -101,6 +104,7 @@ export default function LeaderboardPage() {
           </CardContent>
         </Card>
       </main>
+      <AuthModal open={authOpen} onOpenChange={setAuthOpen} />
     </div>
   );
 }

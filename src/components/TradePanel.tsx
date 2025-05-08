@@ -18,7 +18,6 @@ import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import AuthModal from '@/components/AuthModal';
 import { createAuthClient } from 'better-auth/react';
 
 const { useSession } = createAuthClient();
@@ -28,26 +27,25 @@ type Asset = 'BTCUSD' | 'XAUUSD' | 'SPXUSD' | 'NDXUSD';
 interface TradePanelProps {
   initialAsset?: Asset;
   onAssetChange?: (asset: Asset) => void;
+  onAuthChange: (open: boolean) => void;
   onPlaced?: () => void;
 }
 
 export default function TradePanel({
   initialAsset = 'BTCUSD',
   onAssetChange,
+  onAuthChange,
   onPlaced,
 }: TradePanelProps) {
-  /* session -------------------------------------------------------- */
   const { data: session, refetch } = useSession();
   const isLoggedIn = !!session?.user?.id;
 
-  /* internal state ------------------------------------------------- */
   const [symbol, setSymbol] = useState<Asset>(initialAsset);
   const [price, setPrice] = useState<number>(0);
   const [side, setSide] = useState<'long' | 'short'>('long');
   const [usd, setUsd] = useState('');
   const [leverage, setLeverage] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [authOpen, setAuthOpen] = useState(false);
 
   useEffect(() => {
     onAssetChange?.(symbol);
@@ -61,7 +59,6 @@ export default function TradePanel({
     return () => window.removeEventListener('auth:success', handler)
   }, []);
 
-  /* price polling -------------------------------------------------- */
   useEffect(() => {
     let mounted = true;
     async function fetchPrice() {
@@ -81,7 +78,6 @@ export default function TradePanel({
     };
   }, [symbol]);
 
-  /* trade submit --------------------------------------------------- */
   const placeTrade = async () => {
     const margin = Number(usd);
     if (!margin || margin <= 0) {
@@ -115,7 +111,6 @@ export default function TradePanel({
     onPlaced?.();
   };
 
-  /* render --------------------------------------------------------- */
   return (
     <>
       <aside className="w-full max-w-[340px] xl:max-w-[380px] ml-auto xl:ml-8 pt-4">
@@ -218,7 +213,7 @@ export default function TradePanel({
                 {loading ? 'Placing…' : side === 'long' ? 'Long' : 'Short'}
               </Button>
             ) : (
-              <Button className="w-full" onClick={() => setAuthOpen(true)}>
+              <Button className="w-full" onClick={() => onAuthChange(true)}>
                 Connect
               </Button>
             )}
@@ -226,8 +221,6 @@ export default function TradePanel({
         </Card>
       </aside>
 
-      {/* auth modal */}
-      <AuthModal open={authOpen} onOpenChange={setAuthOpen} />
     </>
   );
 }

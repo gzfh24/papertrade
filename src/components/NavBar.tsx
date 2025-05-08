@@ -4,18 +4,23 @@ import { createAuthClient } from "better-auth/react"
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState, useEffect, useCallback } from "react";
-import AuthModal from "@/components/AuthModal";
 import { usePathname } from "next/navigation"
 
 const { useSession } = createAuthClient()
 
-export default function NavBar() {
+interface NavBarProps {
+    onAuthChange: (open: boolean) => void;
+  }
+
+export default function NavBar({
+    onAuthChange,
+}: NavBarProps) {
     const pathname = usePathname();
     const {
         data: session,
-        refetch //refetch the session
+        isPending,
+        refetch
     } = useSession()
-    const [authOpen, setAuthOpen] = useState(false);
     const [balance, setBalance] = useState<number | null>(null);
 
     const fetchBalance = useCallback(async () => {
@@ -50,6 +55,11 @@ export default function NavBar() {
         window.addEventListener('auth:success', handler);
         return () => window.removeEventListener('auth:success', handler)
     }, []);
+
+    useEffect(() => {
+        if (isPending) return;
+        if (pathname === '/trade' && !session?.user?.id) onAuthChange(true);
+      }, [isPending, session?.user?.id]);
 
     const getActiveTab = () => {
         switch (pathname) {
@@ -118,11 +128,10 @@ export default function NavBar() {
                     </form>
                 </div>
                 ) : (
-                    <Button size="sm" onClick={() => setAuthOpen(true)}>Connect</Button>
+                    <Button size="sm" onClick={() => onAuthChange(true)}>Connect</Button>
                 )}
             </div>
             </nav>
-            <AuthModal open={authOpen} onOpenChange={setAuthOpen} />
         </>
     );
     }

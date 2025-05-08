@@ -11,6 +11,9 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
+import { createAuthClient } from 'better-auth/react';
+
+const { useSession } = createAuthClient();
 
 /* ─ helpers ─ */
 type Asset = 'BTCUSD' | 'XAUUSD' | 'SPXUSD' | 'NDXUSD';
@@ -93,6 +96,8 @@ export default function Trades() {
     NDXUSD: 0,
   });
 
+  const { data: session } = useSession();
+
   /* prices poll */
   const fetchPrices = useCallback(async () => {
     const obj: Record<Asset, number> = { BTCUSD: 0, XAUUSD: 0, SPXUSD: 0, NDXUSD: 0 };
@@ -120,7 +125,7 @@ export default function Trades() {
   }, []);
 
   useEffect(() => {
-    fetchOpen();
+    if (session?.user?.id) fetchOpen();
     fetchPrices();
   }, [fetchOpen, fetchPrices]);
 

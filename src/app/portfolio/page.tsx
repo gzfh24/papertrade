@@ -12,6 +12,11 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import NavBar from '@/components/NavBar';
+import { useRouter } from 'next/navigation';
+
+import { createAuthClient } from 'better-auth/react';
+
+const { useSession } = createAuthClient()
 
 /* ‑‑ types ‑‑ */
 type Asset = 'BTCUSD' | 'XAUUSD' | 'SPXUSD' | 'NDXUSD';
@@ -36,14 +41,23 @@ const tz = 'America/New_York';
 export default function PortfolioPage() {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [page, setPage] = useState(1);
+  const router = useRouter();
+
+  const {
+    data: session,
+  } = useSession()
 
   /* fetch closed trades once */
   useEffect(() => {
-    (async () => {
-      const res = await fetch('/api/trade/closed', { cache: 'no-store' });
-      const data = await res.json();
-      if (res.ok) setTrades(data.positions as Trade[]);
-    })();
+    if (!session?.user?.id) {
+      router.push('/trade');
+    } else {
+      (async () => {
+        const res = await fetch('/api/trade/closed', { cache: 'no-store' });
+        const data = await res.json();
+        if (res.ok) setTrades(data.positions as Trade[]);
+      })();
+    }
   }, []);
 
   /* derived metrics */
@@ -72,7 +86,7 @@ export default function PortfolioPage() {
   /* render */
   return (
     <div className="min-h-screen flex flex-col">
-      <NavBar />
+      <NavBar onAuthChange={() => {}}/>
 
       <main className="max-w-7xl mx-auto w-full p-4 space-y-6 flex-1">
         {/* top stats */}
@@ -96,9 +110,9 @@ export default function PortfolioPage() {
             <div className="hidden md:grid grid-cols-9 gap-x-3 text-xs font-medium text-muted-foreground px-1">
               <span>Time</span>
               <span>Asset</span>
-              <span>Dir</span>
+              <span>Direction</span>
               <span className="text-right">Margin</span>
-              <span className="text-right">Lev</span>
+              <span className="text-right">Leverage</span>
               <span className="text-right">Size</span>
               <span className="text-right">Entry</span>
               <span className="text-right">Close</span>
