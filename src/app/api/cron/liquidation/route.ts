@@ -15,7 +15,7 @@ export const revalidate = 0; // never cache
 export async function GET() {
   await initDB();
 
-  /* 1 ─ gather all open positions */
+  // get all open positions
   const portfolios = await Portfolio.find(
     { 'positions.isOpen': true },
     'userId balance positions'
@@ -24,7 +24,7 @@ export async function GET() {
   if (portfolios.length === 0)
     return NextResponse.json({ checked: 0, liquidated: 0 });
 
-  /* 2 ─ fetch mark prices once per symbol */
+  // get mark prices
   const symbols = new Set<Asset>();
   portfolios.forEach((p) =>
     p.positions.forEach((pos: any) => symbols.add(pos.symbol))
@@ -37,7 +37,7 @@ export async function GET() {
     })
   );
 
-  /* 3 ─ iterate & liquidate */
+  // check for liquidations
   let liquidated = 0;
 
   for (const p of portfolios) {
