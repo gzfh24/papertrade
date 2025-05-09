@@ -20,7 +20,7 @@ export default function TradePage() {
     <div className="min-h-screen flex flex-col">
       <NavBar onAuthChange = {setAuthOpen} />
 
-      <main className="flex-1 grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-6 p-4 max-w-7xl mx-auto w-full">
+      <main className="flex-1 grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-2 p-4 max-w-7xl mx-auto w-full">
         {/* TradingView chart */}
         <section className="flex-1 min-h-[500px]">
           <TradingViewWidget asset={asset}/>

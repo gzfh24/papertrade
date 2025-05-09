@@ -1,3 +1,4 @@
+// app/portfolio/page.tsx
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
@@ -49,9 +50,18 @@ export default function PortfolioPage() {
     (async () => {
       const res = await fetch('/api/trade/closed', { cache: 'no-store' });
       const data = await res.json();
-      if (res.ok) setTrades(data.positions as Trade[]);
+      if (res.ok) {
+        setTrades(data.positions as Trade[]);
+      }
     })();
   }, [session?.user?.id, isPending, router]);
+
+  const sortedTrades = useMemo(() => {
+    return [...trades].sort(
+      (a, b) =>
+        new Date(b.closedAt).getTime() - new Date(a.closedAt).getTime()
+    );
+  }, [trades]);
 
   const { volume, totalPnl, winRate } = useMemo(() => {
     const vol = trades.reduce(
@@ -64,8 +74,9 @@ export default function PortfolioPage() {
     return { volume: vol, totalPnl: pnl, winRate: rate };
   }, [trades]);
 
-  const lastPage = Math.max(1, Math.ceil(trades.length / PAGE_SIZE));
-  const slice = trades.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const lastPage = Math.max(1, Math.ceil(sortedTrades.length / PAGE_SIZE));
+  const slice = sortedTrades.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   const fmt = (n: number) =>
     `$${n.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
 
@@ -162,7 +173,7 @@ export default function PortfolioPage() {
               </table>
             </div>
 
-            {trades.length > PAGE_SIZE && (
+            {sortedTrades.length > PAGE_SIZE && (
               <div className="flex justify-end mt-4 gap-2">
                 <Button
                   size="sm"
